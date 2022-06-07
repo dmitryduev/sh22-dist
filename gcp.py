@@ -167,14 +167,13 @@ if __name__ == "__main__":
         parser.add_argument(f"--{field.name}", type=field.type)
 
     subparsers = parser.add_subparsers(
-        dest="command", title="action", description="Command to run"
+        dest="command", title="command", description="Command to run"
     )
 
     parsers = dict()
     for a in actions:
         parsers[a] = subparsers.add_parser(a)
 
-    # todo: add parameters to individual commands, add them to config
     args = vars(parser.parse_args())
     command = args.pop("command")
     conf = Config(**{k: v for k, v in args.items() if v is not None})
