@@ -44,12 +44,15 @@ def main(action: Action, config: Config):
     """
     """
     # setup gcloud:
-    echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
+    # generate new key if you don't have one:
+    https://console.cloud.google.com/iam-admin/serviceaccounts/details/100090846244674923262/keys
     gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
-    gcloud --quiet config set project $GOOGLE_PROJECT_ID
-    gcloud --quiet config set compute/zone $GOOGLE_COMPUTE_ZONE
+    # gcloud --quiet config set project $GOOGLE_PROJECT_ID
+    # gcloud --quiet config set compute/zone $GOOGLE_COMPUTE_ZONE
     gcloud auth configure-docker --quiet << pipeline.parameters.container_registry >>
     """
+
+    image_name = f"{config.container_registry}/{config.gcp_project_id}/{config.image_name}:latest"
 
     if action == "update-components":
         # update gcloud components
@@ -99,7 +102,7 @@ def main(action: Action, config: Config):
                 "docker",
                 "build",
                 "-t",
-                f"{config.container_registry}/{config.gcp_project_id}/{config.image_name}:latest",
+                image_name,
                 "--build-arg",
                 f"PYTHON_VERSION={config.python_version}",
                 "--build-arg",
@@ -109,7 +112,7 @@ def main(action: Action, config: Config):
         )
     elif action == "push-image":
         # push image
-        subprocess.run(["docker", "push"])
+        subprocess.run(["docker", "push", image_name])
     elif action == "install-gpu-drivers":
         # install GPU drivers
         subprocess.run(
