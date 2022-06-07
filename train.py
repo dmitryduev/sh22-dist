@@ -1,14 +1,15 @@
 import argparse
 import os
 from datetime import datetime
+from typing import Callable
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import wandb
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision import datasets
 from torchvision.transforms import ToTensor
-import wandb
 
 
 def setup(rank: int, world_size: int, backend: str, init_method: str) -> None:
@@ -23,7 +24,7 @@ def cleanup() -> None:
 
 class Model(nn.Module):
     def __init__(self):
-        super(Model, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
         self.conv2_drop = nn.Dropout2d()
@@ -107,11 +108,14 @@ def train(rank: int, args) -> None:
             loss.backward()
             optimizer.step()
 
-        if (i + 1) % args.log_interval == 0:
-            print(
-                f"Train::\tRank: [{rank}/{args.world_size}]\tEpoch: [{epoch + 1}/{args.epochs}]\tStep [{i+1}/{total_num_steps}] ({100. * (i + 1) * (epoch + 1) / args.epochs * total_num_steps:.0f}%)\tLoss: {loss.item():.6f}"
-            )
-            run.log(loss)
+            if (i + 1) % args.log_interval == 0:
+                print(
+                    f"Train::\tRank: [{rank}/{args.world_size}]\t"
+                    f"Epoch: [{epoch + 1}/{args.epochs}]\tStep [{i+1}/{total_num_steps}] "
+                    f"({100. * (i + 1) * (epoch + 1) / args.epochs * total_num_steps:.0f}%)\t"
+                    f"Loss: {loss.item():.6f}"
+                )
+                run.log(loss)
 
             # torch.save(model.state_dict(), '/results/model.pth')
             # torch.save(optimizer.state_dict(), '/results/optimizer.pth')
