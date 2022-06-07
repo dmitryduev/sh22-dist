@@ -1,7 +1,7 @@
 import argparse
 import os
 import subprocess
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, fields
 from typing import Literal, get_args
 
 
@@ -31,6 +31,7 @@ Action = Literal[
     "push-image",
     "start-pod",
     "delete-pod",
+    "noop",
 ]
 
 
@@ -155,11 +156,15 @@ def main(action: Action, config: Config):
                 print(e)
     elif action == "delete-pod":
         subprocess.run(["kubectl", "delete", "-f", config.pod_config])
+    elif action == "noop":
+        pass
 
 
 if __name__ == "__main__":
     actions = get_args(Action)
     parser = argparse.ArgumentParser()
+    for field in fields(Config):
+        parser.add_argument(f"--{field.name}", type=field.type)
 
     subparsers = parser.add_subparsers(
         dest="command", title="action", description="Command to run"
@@ -170,6 +175,7 @@ if __name__ == "__main__":
         parsers[a] = subparsers.add_parser(a)
 
     # todo: add parameters to individual commands, add them to config
-    args = parser.parse_args()
-    conf = Config()
-    main(action=args.command, config=conf)
+    args = vars(parser.parse_args())
+    command = args.pop("command")
+    conf = Config(**{k: v for k, v in args.items() if v is not None})
+    main(action=command, config=conf)
