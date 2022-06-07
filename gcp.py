@@ -1,4 +1,5 @@
 import argparse
+import os
 import subprocess
 from dataclasses import dataclass
 from typing import Literal, get_args
@@ -120,8 +121,37 @@ def main(action: Action, config: Config):
             ]
         )
     elif action == "start-pod":
-        #  spin up GPU pod
+        api_key = os.environ.get("WANDB_API_KEY")
+        if api_key is not None:
+            subprocess.run(
+                [
+                    "cp",
+                    config.pod_config,
+                    f"{config.pod_config}.tmp",
+                ]
+            )
+            subprocess.run(
+                [
+                    "sed",
+                    "-i",
+                    "-e",
+                    f"""s/WANDB_API_KEY_PLACEHOLDER/{api_key}/g""",
+                    config.pod_config,
+                ]
+            )
+        # spin up GPU pod
         subprocess.run(["kubectl", "apply", "-f", config.pod_config])
+        if api_key is not None:
+            try:
+                subprocess.run(
+                    [
+                        "mv",
+                        f"{config.pod_config}.tmp",
+                        config.pod_config,
+                    ]
+                )
+            except Exception as e:
+                print(e)
     elif action == "delete-pod":
         subprocess.run(["kubectl", "delete", "-f", config.pod_config])
 
