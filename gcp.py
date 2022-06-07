@@ -103,6 +103,7 @@ def main(action: Action, config: Config):
                 f"PYTHON_VERSION={config.python_version}",
                 "--build-arg",
                 f"GIT_BRANCH={config.git_branch}",
+                ".",
             ]
         )
     elif action == "push-image":
