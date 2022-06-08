@@ -117,19 +117,18 @@ def train(rank: int, args) -> None:
                 print(
                     f"Train::\tRank: [{rank}/{args.world_size}]\t"
                     f"Epoch: [{epoch + 1}/{args.epochs}]\tStep [{i+1}/{total_num_steps}] "
-                    f"({100. * (i + 1) * (epoch + 1) / args.epochs * total_num_steps:.0f}%)\t"
                     f"Loss: {loss.item():.6f}"
                 )
                 run.log({"loss": loss.item()})
 
-            torch.save(model.state_dict(), './results/model.pth')
-            artifact = wandb.Artifact('model', type='model')
-            artifact.add_file('./results/model.pth')
-            run.log_artifact(artifact)
-            torch.save(optimizer.state_dict(), './results/optimizer.pth')
-            artifact = wandb.Artifact('optimizer', type='optimizer')
-            artifact.add_file('./results/optimizer.pth')
-            run.log_artifact(artifact)
+            # torch.save(model.state_dict(), './results/model.pth')
+            # artifact = wandb.Artifact('model', type='model')
+            # artifact.add_file('./results/model.pth')
+            # run.log_artifact(artifact)
+            # torch.save(optimizer.state_dict(), './results/optimizer.pth')
+            # artifact = wandb.Artifact('optimizer', type='optimizer')
+            # artifact.add_file('./results/optimizer.pth')
+            # run.log_artifact(artifact)
 
     cleanup()
     run.finish()
