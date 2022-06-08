@@ -98,8 +98,11 @@ def train(rank: int, args) -> None:
     for epoch in range(args.epochs):
         for i, (images, labels) in enumerate(train_loader):
 
+            wandb.log({"images": wandb.Image(images)})
             images = images.cuda(non_blocking=True)
             labels = labels.cuda(non_blocking=True)
+
+
 
             # FWD pass
             outputs = ddp_model(images)
