@@ -119,8 +119,14 @@ def train(rank: int, args) -> None:
                 )
                 run.log({"loss": loss.item()})
 
-            # torch.save(model.state_dict(), '/results/model.pth')
-            # torch.save(optimizer.state_dict(), '/results/optimizer.pth')
+            torch.save(model.state_dict(), './results/model.pth')
+            artifact = wandb.Artifact('model', type='model')
+            artifact.add_file('./results/model.pth')
+            run.log_artifact(artifact)
+            torch.save(optimizer.state_dict(), './results/optimizer.pth')
+            artifact = wandb.Artifact('optimizer', type='optimizer')
+            artifact.add_file('./results/optimizer.pth')
+            run.log_artifact(artifact)
 
     cleanup()
     run.finish()
