@@ -45,7 +45,7 @@ class Model(nn.Module):
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, inputs, labels):
-        "Initialization"
+        # Initialization
         self.labels = labels
         self.inputs = inputs
 
