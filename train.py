@@ -45,7 +45,7 @@ class Model(nn.Module):
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, inputs, labels):
-        "Initialization"
+        # Initialization
         self.labels = labels
         self.inputs = inputs
 
@@ -101,8 +101,6 @@ def train(rank: int, args) -> None:
             wandb.log({"images": wandb.Image(images)})
             images = images.cuda(non_blocking=True)
             labels = labels.cuda(non_blocking=True)
-
-
 
             # FWD pass
             outputs = ddp_model(images)
