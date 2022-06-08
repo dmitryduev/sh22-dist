@@ -4,8 +4,10 @@ from datetime import datetime
 from typing import Callable
 
 import torch
+import torch.distributed
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.utils.data
 import wandb
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision import datasets
@@ -115,12 +117,13 @@ def train(rank: int, args) -> None:
                     f"({100. * (i + 1) * (epoch + 1) / args.epochs * total_num_steps:.0f}%)\t"
                     f"Loss: {loss.item():.6f}"
                 )
-                run.log(loss)
+                run.log({"loss": loss.item()})
 
             # torch.save(model.state_dict(), '/results/model.pth')
             # torch.save(optimizer.state_dict(), '/results/optimizer.pth')
 
     cleanup()
+    run.finish()
 
 
 def main(fn: Callable) -> None:
@@ -130,7 +133,6 @@ def main(fn: Callable) -> None:
         "--nodes",
         default=1,
         type=int,
-        metavar="N",
         help="number of data loading workers (default: 4)",
     )
     parser.add_argument(
@@ -156,34 +158,29 @@ def main(fn: Callable) -> None:
         "--epochs",
         default=2,
         type=int,
-        metavar="N",
         help="number of total epochs to run",
     )
     parser.add_argument(
         "--batch-size",
         default=32,
         type=int,
-        metavar="N",
         help="batch size of the training data",
     )
     parser.add_argument(
         "--log-interval",
         default=10,
         type=int,
-        metavar="N",
         help="How often to log the resulting optimization step",
     )
     parser.add_argument(
         "--lr",
-        default=10e-4,
-        type=int,
-        metavar="N",
+        default=1e-4,
+        type=float,
         help="Learning rate for the optimization step",
     )
     parser.add_argument(
         "--data-path",
         default="./data",
-        type=str,
         help="directory path where to download datasets",
     )
 
@@ -193,7 +190,7 @@ def main(fn: Callable) -> None:
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "12355"
     # TODO nprocs should it be world_size or number of gpus?
-    torch.multiprocessing.spawn(fn, nprocs=args.world_size, args=(args,), join=True)
+    torch.multiprocessing.spawn(fn, nprocs=args.gpus, args=(args,), join=True)
 
 
 if __name__ == "__main__":

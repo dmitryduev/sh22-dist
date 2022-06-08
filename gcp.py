@@ -29,7 +29,7 @@ Action = Literal[
     "get-credentials",
     "delete-cluster",
     "build-image",
-    "push-image",
+    # "push-image",
     "start-pod",
     "delete-pod",
     "noop",
@@ -85,6 +85,18 @@ def main(action: Action, config: Config):
                 "/cos/daemonset-preloaded-latest.yaml",
             ]
         )
+    elif action == "install-gpu-drivers":
+        # install GPU drivers
+        subprocess.run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                "https://raw.githubusercontent.com/GoogleCloudPlatform"
+                "/container-engine-accelerators/master/nvidia-driver-installer"
+                "/cos/daemonset-preloaded-latest.yaml",
+            ]
+        )
     elif action == "get-credentials":
         # get credentials
         subprocess.run(
@@ -109,7 +121,7 @@ def main(action: Action, config: Config):
         )
     elif action == "build-image":
         # use buildx to build image
-        subprocess.run(["docker", "buildx", "create", "--use"])
+        # subprocess.run(["docker", "buildx", "create", "--use"])
         # build docker image
         subprocess.run(
             [
@@ -117,7 +129,9 @@ def main(action: Action, config: Config):
                 "buildx",
                 "build",
                 "--platform",
-                "linux/amd64,linux/arm64",
+                "linux/amd64",
+                # "linux/amd64,linux/arm64",
+                "--push",
                 "-t",
                 image_name,
                 "--build-arg",
@@ -127,21 +141,9 @@ def main(action: Action, config: Config):
                 ".",
             ]
         )
-    elif action == "push-image":
-        # push image
-        subprocess.run(["docker", "push", image_name])
-    elif action == "install-gpu-drivers":
-        # install GPU drivers
-        subprocess.run(
-            [
-                "kubectl",
-                "apply",
-                "-f",
-                "https://raw.githubusercontent.com/GoogleCloudPlatform"
-                "/container-engine-accelerators/master/nvidia-driver-installer"
-                "/cos/daemonset-preloaded-latest.yaml",
-            ]
-        )
+    # elif action == "push-image":
+    #     # push image
+    #     subprocess.run(["docker", "push", image_name])
     elif action == "start-pod":
         api_key = os.environ.get("WANDB_API_KEY")
         if api_key is not None:
