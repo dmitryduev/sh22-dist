@@ -25,6 +25,7 @@ class Config:
 Action = Literal[
     "update-components",
     "create-cluster",
+    "install-gpu-drivers",
     "get-credentials",
     "delete-cluster",
     "build-image",
@@ -73,6 +74,17 @@ def main(action: Action, config: Config):
                 f"--accelerator=type={config.accelerator_type},count={config.accelerator_count}",
             ]
         )
+        # install GPU drivers
+        subprocess.run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                "https://raw.githubusercontent.com/GoogleCloudPlatform"
+                "/container-engine-accelerators/master/nvidia-driver-installer"
+                "/cos/daemonset-preloaded-latest.yaml",
+            ]
+        )
     elif action == "get-credentials":
         # get credentials
         subprocess.run(
@@ -96,11 +108,16 @@ def main(action: Action, config: Config):
             ]
         )
     elif action == "build-image":
+        # use buildx to build image
+        subprocess.run(["docker", "buildx", "create", "--use"])
         # build docker image
         subprocess.run(
             [
                 "docker",
+                "buildx",
                 "build",
+                "--platform",
+                "linux/amd64,linux/arm64",
                 "-t",
                 image_name,
                 "--build-arg",

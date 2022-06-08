@@ -54,5 +54,5 @@ RUN git clone https://github.com/dmitryduev/sh22-dist.git ${WORKING_DIRECTORY} \
 RUN PATH=/home/sdk/.local/bin:$PATH
 
 WORKDIR ${WORKING_DIRECTORY}
-#CMD ["tail", "-f", "/dev/null"]
-CMD ["python", "train.py"]
+CMD ["tail", "-f", "/dev/null"]
+#CMD ["python", "train.py"]
