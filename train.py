@@ -93,6 +93,11 @@ def train(rank: int, args) -> None:
     criterion = nn.CrossEntropyLoss().cuda(rank)
     optimizer = torch.optim.SGD(ddp_model.parameters(), lr=args.lr)
     run = wandb.init(project="summer_hack_2022", group=args.group_name, config=args)
+    if rank == 0:
+        run.save('gcp.py')
+        run.save('Dockerfile')
+    elif rank == 1:
+        run.save('pod.yaml')
 
     total_num_steps = len(train_loader)
     for epoch in range(args.epochs):
