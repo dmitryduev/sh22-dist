@@ -29,8 +29,7 @@ Action = Literal[
     "get-credentials",
     "delete-cluster",
     "build-image",
-    # "push-image",
-    "start-pod",
+    "start-pods",
     "delete-pod",
     "noop",
 ]
@@ -141,10 +140,7 @@ def main(action: Action, config: Config):
                 ".",
             ]
         )
-    # elif action == "push-image":
-    #     # push image
-    #     subprocess.run(["docker", "push", image_name])
-    elif action == "start-pod":
+    elif action == "start-pods":
         api_key = os.environ.get("WANDB_API_KEY")
         if api_key is not None:
             subprocess.run(
@@ -185,18 +181,15 @@ def main(action: Action, config: Config):
 if __name__ == "__main__":
     actions = get_args(Action)
     parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=actions, help="command to run")
     for field in fields(Config):
-        parser.add_argument(f"--{field.name}", type=field.type)
-
-    subparsers = parser.add_subparsers(
-        dest="command", title="command", description="Command to run"
-    )
-
-    parsers = dict()
-    for a in actions:
-        parsers[a] = subparsers.add_parser(a)
+        parser.add_argument(
+            f"--{field.name}",
+            type=field.type,
+            default=field.default,
+            help=f"type: {field.type.__name__}; default: {field.default}",
+        )
 
     args = vars(parser.parse_args())
     command = args.pop("command")
-    conf = Config(**{k: v for k, v in args.items() if v is not None})
-    main(action=command, config=conf)
+    main(action=command, config=Config(**args))

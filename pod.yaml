@@ -1,22 +1,29 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: dist-gpu-pod
 spec:
-  restartPolicy: Never
-  containers:
-    - name: gpu-sdk
-      image: gcr.io/wandb-client-cicd/sh22-dist-gpu:latest
-      env:
-        - name: WANDB_API_KEY
-          value: WANDB_API_KEY_PLACEHOLDER
-      command: ["tail", "-f", "/dev/null"]
-      # do not restart the container if it exits
-      resources:
-        limits:
-          cpu: 1.999
-          nvidia.com/gpu: 2
-        requests:
-          cpu: 1.5
-  #    ports:
-  #    - containerPort: 80
+  selector:
+    matchLabels:
+      run: dist-gpu-pod
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        run: dist-gpu-pod
+    spec:
+#      restartPolicy: Never
+      containers:
+        - name: dist-gpu-pod
+          image: gcr.io/wandb-client-cicd/sh22-dist-gpu:latest
+          env:
+            - name: WANDB_API_KEY
+              value: WANDB_API_KEY_PLACEHOLDER
+          command: [ "tail", "-f", "/dev/null" ]
+          # do not restart the container if it exits
+          resources:
+            limits:
+              cpu: 1.999
+              nvidia.com/gpu: 2
+            requests:
+              cpu: 1.5
