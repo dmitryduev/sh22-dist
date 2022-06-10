@@ -560,7 +560,7 @@ def validate(
     run.log(
         {
             "table": df,
-            "sample_images": images,
+            # "sample_images": images,
             "global_step": global_step,
         }
     )
