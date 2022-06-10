@@ -32,6 +32,7 @@ Action = Literal[
     "start-pods",
     "delete-pods",
     "noop",
+    "e2e",  # run all steps in a meta way
 ]
 
 

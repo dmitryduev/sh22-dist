@@ -126,6 +126,9 @@ parser.add_argument(
 )
 
 
+MAX_ROWS = 128
+
+
 def main():
     wandb.require("service")
 
@@ -184,6 +187,7 @@ def main():
             criterion,
             device_id,
             print_freq,
+            (epoch + 1) * len(train_loader) - 1,  # current global_step
             run,
         )
 
@@ -444,6 +448,8 @@ def train(
     # switch to train mode
     model.train()
 
+    global_step: int = epoch * len(train_loader)
+
     end = time.perf_counter()
     for i, (images, target) in enumerate(train_loader):
         # measure data loading time
@@ -462,13 +468,13 @@ def train(
         top1.update(acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
 
-        run.log(
-            {
-                "train_loss": loss.item(),
-                "train_acc1": acc1[0],
-                "train_acc5": acc5[0],
-            }
-        )
+        data = {
+            "train_loss": loss.item(),
+            "train_acc1": acc1[0],
+            "train_acc5": acc5[0],
+            "global_step": global_step + i,
+        }
+        run.log(data)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -489,6 +495,7 @@ def validate(
     criterion,  # nn.CrossEntropyLoss
     device_id: int,
     print_freq: int,
+    global_step: int,
     run: "wandb.sdk.wandb_run.Run",
 ):
     batch_time = AverageMeter("Time", ":6.3f")
@@ -525,24 +532,20 @@ def validate(
             batch_time.update(time.perf_counter() - end)
             end = time.perf_counter()
 
-            data.extend(
-                [
-                    {
-                        "image": i.squeeze(),
-                        "output": o.squeeze(),
-                        "target": t.squeeze(),
-                    }
-                    for i, o, t in zip(images, output, target)
-                ]
-            )
+            if len(data) < MAX_ROWS:
+                data.extend(
+                    [
+                        {
+                            "image": i.squeeze(),
+                            "output": o.squeeze(),
+                            "target": t.squeeze(),
+                        }
+                        for i, o, t in zip(images, output, target)
+                    ]
+                )
 
             if i % print_freq == 0:
                 progress.display(i)
-                run.log(
-                    {
-                        "images": wandb.Image(images),
-                    }
-                )
 
             # todo: log loss, acc1, acc5 to wandb
 
@@ -550,7 +553,15 @@ def validate(
         print(f" * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}")
 
     df = pd.DataFrame.from_records(data)
-    run.log({"table": df})
+    # random 5 images from df.image:
+    images = df.image.sample(5)
+    run.log(
+        {
+            "table": df,
+            "sample_images": wandb.Image(images),
+            "global_step": global_step,
+        }
+    )
 
     return top1.avg
 
