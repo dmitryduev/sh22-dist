@@ -536,7 +536,7 @@ def validate(
                 data.extend(
                     [
                         {
-                            "image": i.squeeze(),
+                            "image": wandb.Image(np.transpose(i.numpy(), (1, 2, 0))),
                             "output": o.squeeze(),
                             "target": t.squeeze(),
                         }
@@ -554,11 +554,11 @@ def validate(
 
     df = pd.DataFrame.from_records(data)
     # random 5 images from df.image:
-    images = df.image.sample(5).to_numpy()
+    images = df.image.sample(5).to_list()
     run.log(
         {
             "table": df,
-            # "sample_images": wandb.Image(images),
+            "sample_images": images,
             "global_step": global_step,
         }
     )
