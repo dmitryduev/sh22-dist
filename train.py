@@ -541,6 +541,8 @@ def validate(
                             ),
                             "output": o.cpu().squeeze().numpy(),
                             "target": t.cpu().squeeze().numpy(),
+                            "max_output": np.argmax(o.cpu().squeeze().numpy()),
+                            "max_target": np.argmax(t.cpu().squeeze().numpy()),
                         }
                         for i, o, t in zip(images, output, target)
                     ]
