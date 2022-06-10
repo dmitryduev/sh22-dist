@@ -6,43 +6,6 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""
-Source: `pytorch imagenet example <https://github.com/pytorch/examples/blob/master/imagenet/main.py>`_ # noqa B950
-
-Modified and simplified to make the original pytorch example compatible with
-torchelastic.distributed.launch.
-
-Changes:
-
-1. Removed ``rank``, ``gpu``, ``multiprocessing-distributed``, ``dist_url`` options.
-   These are obsolete parameters when using ``torchelastic.distributed.launch``.
-
-2. Removed ``seed``, ``evaluate``, ``pretrained`` options for simplicity.
-
-3. Removed ``resume``, ``start-epoch`` options.
-   Loads the most recent checkpoint by default.
-
-4. ``batch-size`` is now per GPU (worker) batch size rather than for all GPUs.
-
-5. Defaults ``workers`` (num data loader workers) to ``0``.
-
-Usage
-
-::
-
- >>> python -m torchelastic.distributed.launch
-        --nnodes=$NUM_NODES
-        --nproc_per_node=$WORKERS_PER_NODE
-        --rdzv_id=$JOB_ID
-        --rdzv_backend=etcd
-        --rdzv_endpoint=$ETCD_HOST:$ETCD_PORT
-        main.py
-        --arch resnet18
-        --epochs 20
-        --batch-size 32
-        <DATA_DIR>
-"""
-
 import argparse
 import io
 import os
@@ -52,7 +15,8 @@ from contextlib import contextmanager
 from datetime import timedelta
 from typing import List, Tuple
 
-import numpy
+import numpy as np
+import pandas as pd
 import torch
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
@@ -64,6 +28,7 @@ import torch.utils.data.distributed
 import torchvision.datasets as datasets
 import torchvision.models as models
 import torchvision.transforms as transforms
+import wandb
 from torch.distributed.elastic.utils.data import ElasticDistributedSampler
 from torch.nn.parallel import DistributedDataParallel
 from torch.optim import SGD
@@ -149,8 +114,21 @@ parser.add_argument(
     type=int,
 )
 
+parser.add_argument(
+    "--wandb_run_group",
+    type=str,
+    default="go-sdk",
+)
+parser.add_argument(
+    "--wandb_project",
+    type=str,
+    default="elastic-imagenet",
+)
+
 
 def main():
+    wandb.require("service")
+
     args = parser.parse_args()
     # device_id = int(os.environ["LOCAL_RANK"])
     device_id = args.local_rank
@@ -179,6 +157,8 @@ def main():
     start_epoch = state.epoch + 1
     print(f"=> start_epoch: {start_epoch}, best_acc1: {state.best_acc1}")
 
+    run = wandb.init(project=args.wandb_project, group=args.wandb_run_group)
+
     print_freq = args.print_freq
     for epoch in range(start_epoch, args.epochs):
         state.epoch = epoch
@@ -186,10 +166,26 @@ def main():
         adjust_learning_rate(optimizer, epoch, args.lr)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch, device_id, print_freq)
+        train(
+            train_loader,
+            model,
+            criterion,
+            optimizer,
+            epoch,
+            device_id,
+            print_freq,
+            run,
+        )
 
         # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion, device_id, print_freq)
+        acc1 = validate(
+            val_loader,
+            model,
+            criterion,
+            device_id,
+            print_freq,
+            run,
+        )
 
         # remember best acc@1 and save checkpoint
         is_best = acc1 > state.best_acc1
@@ -197,6 +193,8 @@ def main():
 
         if device_id == 0:
             save_checkpoint(state, is_best, args.checkpoint_file)
+
+    run.finish()
 
 
 class State:
@@ -371,7 +369,7 @@ def load_checkpoint(
 
         with io.BytesIO() as f:
             torch.save(state.capture_snapshot(), f)
-            raw_blob = numpy.frombuffer(f.getvalue(), dtype=numpy.uint8)
+            raw_blob = np.frombuffer(f.getvalue(), dtype=np.uint8)
 
         blob_len = torch.tensor(len(raw_blob))
         dist.broadcast(blob_len, src=max_rank, group=pg)
@@ -430,6 +428,7 @@ def train(
     epoch: int,
     device_id: int,
     print_freq: int,
+    run: "wandb.sdk.wandb_run.Run",
 ):
     batch_time = AverageMeter("Time", ":6.3f")
     data_time = AverageMeter("Data", ":6.3f")
@@ -463,6 +462,14 @@ def train(
         top1.update(acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
 
+        run.log(
+            {
+                "train_loss": loss.item(),
+                "train_acc1": acc1[0],
+                "train_acc5": acc5[0],
+            }
+        )
+
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
@@ -482,6 +489,7 @@ def validate(
     criterion,  # nn.CrossEntropyLoss
     device_id: int,
     print_freq: int,
+    run: "wandb.sdk.wandb_run.Run",
 ):
     batch_time = AverageMeter("Time", ":6.3f")
     losses = AverageMeter("Loss", ":.4e")
@@ -490,6 +498,8 @@ def validate(
     progress = ProgressMeter(
         len(val_loader), [batch_time, losses, top1, top5], prefix="Test: "
     )
+
+    data = []
 
     # switch to evaluate mode
     model.eval()
@@ -515,11 +525,32 @@ def validate(
             batch_time.update(time.perf_counter() - end)
             end = time.perf_counter()
 
+            data.extend(
+                [
+                    {
+                        "image": i,
+                        "output": o.item(),
+                        "target": t.item(),
+                    }
+                    for i, o, t in zip(images, output, target)
+                ]
+            )
+
             if i % print_freq == 0:
                 progress.display(i)
+                run.log(
+                    {
+                        "images": wandb.Image(images),
+                    }
+                )
+
+            # todo: log loss, acc1, acc5 to wandb
 
         # TODO: this should also be done with the ProgressMeter
         print(f" * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}")
+
+    df = pd.DataFrame.from_records(data)
+    run.log({"table": df})
 
     return top1.avg
 
