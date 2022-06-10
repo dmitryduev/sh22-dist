@@ -127,6 +127,7 @@ unzip tiny-imagenet-200.zip
 python -m torch.distributed.launch \
   --nnodes=2 --node_rank=0 --nproc_per_node=2 \
   --master_addr=<IP_ON_THE_LOCAL_NETWORK> --master_port=<FREE_PORT> \
+  --wandb_run_group=go-sdk-1 \
   main.py /wandb/sh22-dist/tiny-imagenet-200/
 ```
 
@@ -135,6 +136,7 @@ python -m torch.distributed.launch \
 python -m torch.distributed.launch \
   --nnodes=2 --node_rank=1 --nproc_per_node=2 \
   --master_addr=<IP_OF_THE_FIRST_NODE_ON_THE_LOCAL_NETWORK> --master_port=<FREE_PORT> \
+  --wandb_run_group=go-sdk-1 \
   main.py /wandb/sh22-dist/tiny-imagenet-200/
 ```
 
