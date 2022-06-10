@@ -95,7 +95,7 @@ python gcp.py get-credentials
 
 - Deploy the pods with the following command:
 ```shell
-export WANDB_API_KEY=<your-api-key>
+export WANDB_API_KEY=<your-api-key>  # replace with your wandb API key
 python gcp.py start-pods
 ```
 It takes about a minute to start the pods.
@@ -126,18 +126,16 @@ unzip tiny-imagenet-200.zip
 ```shell
 python -m torch.distributed.launch \
   --nnodes=2 --node_rank=0 --nproc_per_node=2 \
-  --master_addr=<IP_ON_THE_LOCAL_NETWORK> --master_port=<FREE_PORT> \
-  --wandb_run_group=go-sdk-1 \
-  main.py /wandb/sh22-dist/tiny-imagenet-200/
+  --master_addr=10.0.0.10 --master_port=32768 \
+  train.py /wandb/sh22-dist/tiny-imagenet-200/ --wandb_run_group=go-sdk-2
 ```
 
 - On the second node, run:
 ```shell
 python -m torch.distributed.launch \
   --nnodes=2 --node_rank=1 --nproc_per_node=2 \
-  --master_addr=<IP_OF_THE_FIRST_NODE_ON_THE_LOCAL_NETWORK> --master_port=<FREE_PORT> \
-  --wandb_run_group=go-sdk-1 \
-  main.py /wandb/sh22-dist/tiny-imagenet-200/
+  --master_addr=10.0.0.10 --master_port=32768 \
+  train.py /wandb/sh22-dist/tiny-imagenet-200/ --wandb_run_group=go-sdk-2
 ```
 
 You can monitor how your training is going with the following command:
