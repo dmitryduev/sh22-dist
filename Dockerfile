@@ -29,7 +29,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcudnn8 \
     net-tools \
     htop \
-    nvtop\
+    nvtop \
+    wget \
+    unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/python3 /usr/bin/python
 

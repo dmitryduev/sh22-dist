@@ -30,7 +30,7 @@ Action = Literal[
     "delete-cluster",
     "build-image",
     "start-pods",
-    "delete-pod",
+    "delete-pods",
     "noop",
 ]
 
@@ -172,7 +172,7 @@ def main(action: Action, config: Config):
                 )
             except Exception as e:
                 print(e)
-    elif action == "delete-pod":
+    elif action == "delete-pods":
         subprocess.run(["kubectl", "delete", "-f", config.pod_config])
     elif action == "noop":
         pass
