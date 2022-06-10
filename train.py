@@ -445,10 +445,10 @@ def train(
     # switch to train mode
     model.train()
 
-    end = time.time()
+    end = time.perf_counter()
     for i, (images, target) in enumerate(train_loader):
         # measure data loading time
-        data_time.update(time.time() - end)
+        data_time.update(time.perf_counter() - end)
 
         images = images.cuda(device_id, non_blocking=True)
         target = target.cuda(device_id, non_blocking=True)
@@ -469,8 +469,8 @@ def train(
         optimizer.step()
 
         # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
+        batch_time.update(time.perf_counter() - end)
+        end = time.perf_counter()
 
         if i % print_freq == 0:
             progress.display(i)
@@ -495,7 +495,7 @@ def validate(
     model.eval()
 
     with torch.no_grad():
-        end = time.time()
+        end = time.perf_counter()
         for i, (images, target) in enumerate(val_loader):
             if device_id is not None:
                 images = images.cuda(device_id, non_blocking=True)
@@ -512,8 +512,8 @@ def validate(
             top5.update(acc5[0], images.size(0))
 
             # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
+            batch_time.update(time.perf_counter() - end)
+            end = time.perf_counter()
 
             if i % print_freq == 0:
                 progress.display(i)
