@@ -558,7 +558,7 @@ def validate(
     run.log(
         {
             "table": df,
-            "sample_images": wandb.Image(images),
+            # "sample_images": wandb.Image(images),
             "global_step": global_step,
         }
     )
