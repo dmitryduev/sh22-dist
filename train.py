@@ -536,7 +536,9 @@ def validate(
                 data.extend(
                     [
                         {
-                            "image": wandb.Image(np.transpose(i.numpy(), (1, 2, 0))),
+                            "image": wandb.Image(
+                                np.transpose(i.cpu().numpy(), (1, 2, 0))
+                            ),
                             "output": o.squeeze(),
                             "target": t.squeeze(),
                         }
