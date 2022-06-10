@@ -556,7 +556,9 @@ def validate(
 
     df = pd.DataFrame.from_records(data)
     # random 5 images from df.image:
-    # images = df.image.sample(5).to_list()
+    print(df.output.head(2))
+    print(df.target.head(2))
+    images = df.image.sample(5).to_list()
     run.log(
         {
             "table": df,
