@@ -556,12 +556,15 @@ def validate(
 
     df = pd.DataFrame.from_records(data)
     # random 5 images from df.image:
-    images = df.image.sample(5).to_list()
+    # images = df.image.sample(5).to_list()
     run.log(
         {
             "table": df,
             # "sample_images": images,
             "global_step": global_step,
+            "val_loss": losses.avg,
+            "val_acc1": top1.avg,
+            "val_acc5": top5.avg,
         }
     )
 
