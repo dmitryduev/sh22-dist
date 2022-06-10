@@ -95,6 +95,7 @@ python gcp.py get-credentials
 
 - Deploy the pods with the following command:
 ```shell
+export WANDB_API_KEY=<your-api-key>
 python gcp.py start-pods
 ```
 It takes about a minute to start the pods.
