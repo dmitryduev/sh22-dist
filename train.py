@@ -528,9 +528,9 @@ def validate(
             data.extend(
                 [
                     {
-                        "image": i,
-                        "output": o.item(),
-                        "target": t.item(),
+                        "image": i.squeeze(),
+                        "output": o.squeeze().item(),
+                        "target": t.squeeze().item(),
                     }
                     for i, o, t in zip(images, output, target)
                 ]
