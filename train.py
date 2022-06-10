@@ -115,14 +115,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--wandb_run_group",
-    type=str,
-    default="go-sdk",
-)
-parser.add_argument(
     "--wandb_project",
     type=str,
     default="elastic-imagenet",
+)
+parser.add_argument(
+    "--wandb_run_group",
+    type=str,
+    default="go-sdk",
 )
 
 
@@ -529,8 +529,8 @@ def validate(
                 [
                     {
                         "image": i.squeeze(),
-                        "output": o.squeeze().item(),
-                        "target": t.squeeze().item(),
+                        "output": o.squeeze(),
+                        "target": t.squeeze(),
                     }
                     for i, o, t in zip(images, output, target)
                 ]
