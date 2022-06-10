@@ -539,8 +539,8 @@ def validate(
                             "image": wandb.Image(
                                 np.transpose(i.cpu().numpy(), (1, 2, 0))
                             ),
-                            "output": o.squeeze(),
-                            "target": t.squeeze(),
+                            "output": o.cpu().squeeze().numpy(),
+                            "target": t.cpu().squeeze().numpy(),
                         }
                         for i, o, t in zip(images, output, target)
                     ]
@@ -560,7 +560,7 @@ def validate(
     run.log(
         {
             "table": df,
-            # "sample_images": images,
+            "sample_images": images,
             "global_step": global_step,
             "val_loss": losses.avg,
             "val_acc1": top1.avg,
