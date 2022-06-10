@@ -539,11 +539,10 @@ def validate(
                             "image": wandb.Image(
                                 np.transpose(i.cpu().numpy(), (1, 2, 0))
                             ),
-                            "acc5": accuracy(o, t, topk=(5,)),
                             # "output": o.cpu().squeeze().numpy(),
                             # "target": t.cpu().squeeze().numpy(),
-                            # "max_output": np.argmax(o.cpu().squeeze().numpy()),
-                            # "max_target": np.argmax(t.cpu().squeeze().numpy()),
+                            "predicted_label": np.argmax(o.cpu().squeeze().numpy()),
+                            "true_label": np.argmax(t.cpu().squeeze().numpy()),
                         }
                         for i, o, t in zip(images, output, target)
                     ]
