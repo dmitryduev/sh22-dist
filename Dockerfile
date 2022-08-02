@@ -14,7 +14,7 @@ ARG GIT_BRANCH=main
 ARG WORKING_DIRECTORY=/wandb/sh22-dist
 
 # todo: enable docker image layer caching on circleci
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends --ignore-missing \
     vim \
     curl \
     ca-certificates \
@@ -29,7 +29,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcudnn8 \
     net-tools \
     htop \
-    nvtop \
     wget \
     unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \

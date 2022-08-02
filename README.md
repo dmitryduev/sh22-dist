@@ -122,11 +122,16 @@ wget http://cs231n.stanford.edu/tiny-imagenet-200.zip
 unzip tiny-imagenet-200.zip
 ```
 
+Find out the IP address of the first pod in the cluster, for example using the `ifconfig` command:
+```shell
+ifconfig
+```
+
 - On the first node, run:
 ```shell
 python -m torch.distributed.launch \
   --nnodes=2 --node_rank=0 --nproc_per_node=2 \
-  --master_addr=10.0.0.10 --master_port=32768 \
+  --master_addr=<FIRST_NODE_IP_ADDRESS> --master_port=32768 \
   train.py /wandb/sh22-dist/tiny-imagenet-200/ --wandb_run_group=go-sdk-2
 ```
 
@@ -134,7 +139,7 @@ python -m torch.distributed.launch \
 ```shell
 python -m torch.distributed.launch \
   --nnodes=2 --node_rank=1 --nproc_per_node=2 \
-  --master_addr=10.0.0.10 --master_port=32768 \
+  --master_addr=<FIRST_NODE_IP_ADDRESS> --master_port=32768 \
   train.py /wandb/sh22-dist/tiny-imagenet-200/ --wandb_run_group=go-sdk-2
 ```
 
