@@ -1,21 +1,28 @@
-[tool.black]
-line-length = 88
-include = '\.pyi?$'
-exclude = '''
-  wandb/vendor/
-| wandb/old/
-| wandb/bin/
-| wandb/proto/
-| wandb/proto_check/
-| wandb/sdk/launch/deploys/
-| wandb/run*
-| wandb/offline-run*
-| tests/fixtures/
-| tests/logs/
-| tests/notebooks/
-| __pycache__
-| .pyc
-'''
-
-[tool.isort]
-profile = "black"
+[project]
+name = "wandb-distributed-training"
+dynamic = ["version"]
+description = "Distributed Training Example with Weights & Biases"
+authors = [{ name = "Weights & Biases", email = "support@wandb.com" }]
+readme = "REAMDE.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+dependencies = ["numpy", "pandas", "torch", "torchvision", "wandb"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Logging",
+  "Topic :: System :: Monitoring",
+]

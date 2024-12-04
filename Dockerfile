@@ -50,13 +50,11 @@ RUN chmod 777 /home/sdk
 RUN git clone https://github.com/dmitryduev/sh22-dist.git ${WORKING_DIRECTORY} \
     && cd ${WORKING_DIRECTORY} \
     && git checkout ${GIT_BRANCH} \
-    && pip install --upgrade pip \
-    && pip install --extra-index-url https://download.pytorch.org/whl/cu113 \
-           -r requirements.txt --no-cache-dir
-#    && pip install tox==${TOX_VERSION} --no-cache-dir
+    && pip install --upgrade pip uv \
+    && uv pip install --extra-index-url https://download.pytorch.org/whl/cu113 . --no-cache-dir
 
 RUN PATH=/home/sdk/.local/bin:$PATH
 
 WORKDIR ${WORKING_DIRECTORY}
-#CMD ["tail", "-f", "/dev/null"]
-CMD ["python", "train.py"]
+CMD ["tail", "-f", "/dev/null"]
+# CMD ["python", "train.py"]

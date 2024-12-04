@@ -130,8 +130,6 @@ MAX_ROWS = 128
 
 
 def main():
-    wandb.require("service")
-
     args = parser.parse_args()
     # device_id = int(os.environ["LOCAL_RANK"])
     device_id = args.local_rank
@@ -160,7 +158,28 @@ def main():
     start_epoch = state.epoch + 1
     print(f"=> start_epoch: {start_epoch}, best_acc1: {state.best_acc1}")
 
-    run = wandb.init(project=args.wandb_project, group=args.wandb_run_group)
+    node_rank = dist.get_rank()
+    print(f"=> node_rank: {node_rank}")
+
+    if node_rank == 0:
+        settings = wandb.Settings(
+            project=args.wandb_project,
+            x_stats_sampling_interval=2,
+            x_label="node-0",
+            x_show_operation_stats=True,
+        )
+    else:
+        settings = wandb.Settings(
+            project=args.wandb_project,
+            x_stats_sampling_interval=2,
+            x_label=f"node-{node_rank}",
+            x_primary_node=False,
+            x_update_finish_state=False,
+            x_show_operation_stats=True,
+        )
+
+    run = wandb.init(settings=settings)
+    print(f"=> wandb run id: {run.id}")
 
     print_freq = args.print_freq
     for epoch in range(start_epoch, args.epochs):
@@ -363,7 +382,7 @@ def load_checkpoint(
 
         # max_epoch == -1 means no one has checkpointed return base state
         if max_epoch == -1:
-            print(f"=> no workers have checkpoints, starting from epoch 0")
+            print("=> no workers have checkpoints, starting from epoch 0")
             return state
 
         # broadcast the state from max_rank (which has the most up-to-date state)
@@ -385,7 +404,7 @@ def load_checkpoint(
             blob = torch.as_tensor(raw_blob, dtype=torch.uint8)
 
         dist.broadcast(blob, src=max_rank, group=pg)
-        print(f"=> done broadcasting checkpoint")
+        print("=> done broadcasting checkpoint")
 
         if rank != max_rank:
             with io.BytesIO(blob.numpy()) as f:
@@ -395,7 +414,7 @@ def load_checkpoint(
         # wait till everyone has loaded the checkpoint
         dist.barrier(group=pg)
 
-    print(f"=> done restoring from previous checkpoint")
+    print("=> done restoring from previous checkpoint")
     return state
 
 
@@ -474,7 +493,8 @@ def train(
             "train_acc5": acc5[0],
             "global_step": global_step + i,
         }
-        run.log(data)
+        if run.settings.x_primary_node:
+            run.log(data)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -561,16 +581,17 @@ def validate(
     # print(df.output.head(2))
     # print(df.target.head(2))
     images = df.image.sample(5).to_list()
-    run.log(
-        {
-            "table": df,
-            "sample_images": images,
-            "global_step": global_step,
-            "val_loss": losses.avg,
-            "val_acc1": top1.avg,
-            "val_acc5": top5.avg,
-        }
-    )
+    if run.settings.x_primary_node:
+        run.log(
+            {
+                "table": df,
+                "sample_images": images,
+                "global_step": global_step,
+                "val_loss": losses.avg,
+                "val_acc1": top1.avg,
+                "val_acc5": top5.avg,
+            }
+        )
 
     return top1.avg
 

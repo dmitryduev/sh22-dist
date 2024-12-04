@@ -132,15 +132,17 @@ ifconfig
 python -m torch.distributed.launch \
   --nnodes=2 --node_rank=0 --nproc_per_node=2 \
   --master_addr=<FIRST_NODE_IP_ADDRESS> --master_port=32768 \
-  train.py /wandb/sh22-dist/tiny-imagenet-200/ --wandb_run_group=go-sdk-2
+  train.py /wandb/sh22-dist/tiny-imagenet-200/
 ```
+
+It will print the run id. Save it and pass to the command run on the second node.
 
 - On the second node, run:
 ```shell
 python -m torch.distributed.launch \
   --nnodes=2 --node_rank=1 --nproc_per_node=2 \
   --master_addr=<FIRST_NODE_IP_ADDRESS> --master_port=32768 \
-  train.py /wandb/sh22-dist/tiny-imagenet-200/ --wandb_run_group=go-sdk-2
+  train.py /wandb/sh22-dist/tiny-imagenet-200/ --wandb_run_id=<run_id>
 ```
 
 You can monitor how your training is going with the following command:
